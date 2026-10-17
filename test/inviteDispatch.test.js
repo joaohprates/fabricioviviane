@@ -36,7 +36,31 @@ test("monta link individual e mensagem predefinida", () => {
   });
   assert.match(message, /^Olá, Família Silva!/);
   assert.match(message, /convite=Fam%C3%ADlia\+Silva#confirmar/);
-  assert.match(message, /usando Família Silva\.$/);
+  assert.match(message, /usando Família Silva\./);
+  assert.match(message, /Fabricio & Viviane/);
+  assert.match(message, /6 de março de 2027/);
+  assert.match(message, /00h00/);
+  assert.match(message, /Av\. Cristóvão Colombo, 87/);
+  assert.match(message, /Deus abençoe/);
+});
+
+test("a mensagem padrão inclui nome, token, data, local e conteúdo religioso", () => {
+  const message = buildInviteMessage({
+    familia: "João e Maria",
+    token: "joao1",
+    siteUrl: "https://fabricioviviane.vercel.app",
+  });
+
+  assert.match(message, /Olá, João e Maria!/);
+  assert.match(message, /Fabricio & Viviane/);
+  assert.match(message, /6 de março de 2027/);
+  assert.match(message, /00h00/);
+  assert.match(message, /Av\. Cristóvão Colombo, 87/);
+  assert.match(message, /Código de confirmação: joao1/);
+  assert.match(message, /convite=joao1#confirmar/);
+  assert.match(message, /bênção de Deus/);
+  assert.match(message, /Mateus 19:6/);
+  assert.match(message, /Deus abençoe este encontro/);
 });
 
 test("prepara apenas convites seguros e ainda não enviados", () => {

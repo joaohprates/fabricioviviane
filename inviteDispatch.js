@@ -4,17 +4,36 @@ import {
   normalizeWhatsAppNumber,
 } from "./googleSheets.js";
 
-export const DEFAULT_INVITE_TEMPLATE = `Olá, {familia}! 💍
+export const DEFAULT_WEDDING_DETAILS = Object.freeze({
+  noivos: "Fabricio & Viviane",
+  data: "6 de março de 2027",
+  horario: "00h00",
+  local: "Av. Cristóvão Colombo, 87 — Jardim Jaguaruna, Marialva/PR",
+});
 
-Com muita alegria, queremos convidar vocês para celebrar o nosso casamento.
+export const RELIGIOUS_BLESSING =
+  "Que Deus abençoe este encontro e a nossa união. 🙏";
 
-Confira o convite e confirme a presença neste link:
+export const DEFAULT_INVITE_TEMPLATE = `Olá, {nome}! 💍🙏
+
+Com a bênção de Deus, nós, {noivos}, queremos convidar vocês para celebrar conosco o nosso casamento.
+
+📅 Data: {data}
+🕛 Horário: {horario}
+📍 Local: {local}
+
+Convite personalizado para: {familia}
+Código de confirmação: {codigo}
+
+Confirme sua presença pelo link:
 {link}
 
-Código do convite: {codigo}
+“Assim, eles já não são dois, mas sim uma só carne.” — Mateus 19:6
 
 Com carinho,
-Fabricio & Viviane`;
+{noivos}
+
+{bencao}`;
 
 export function buildInviteLink(siteUrl, token) {
   const url = new URL(siteUrl);
@@ -28,18 +47,59 @@ export function buildInviteMessage({
   token,
   siteUrl,
   template = DEFAULT_INVITE_TEMPLATE,
+  details = DEFAULT_WEDDING_DETAILS,
 }) {
+  const event = { ...DEFAULT_WEDDING_DETAILS, ...(details || {}) };
+  const selectedTemplate = String(template || DEFAULT_INVITE_TEMPLATE);
+  const hasBlessingPlaceholder = selectedTemplate.includes("{bencao}");
+  const confirmationLink = buildInviteLink(siteUrl, token);
   const replacements = {
     "{familia}": familia,
+    "{nome}": familia,
     "{codigo}": token,
-    "{link}": buildInviteLink(siteUrl, token),
+    "{link}": confirmationLink,
+    "{noivos}": event.noivos,
+    "{data}": event.data,
+    "{horario}": event.horario,
+    "{local}": event.local,
+    "{bencao}": RELIGIOUS_BLESSING,
   };
 
-  return Object.entries(replacements).reduce(
+  let message = Object.entries(replacements).reduce(
     (message, [placeholder, value]) =>
       message.split(placeholder).join(String(value ?? "")),
-    template
-  );
+    selectedTemplate
+  ).trim();
+
+  const requiredDetails = [];
+  if (!message.includes(String(event.noivos))) {
+    requiredDetails.push(`Noivos: ${event.noivos}`);
+  }
+  if (!message.includes(String(event.data))) {
+    requiredDetails.push(`📅 Data: ${event.data}`);
+  }
+  if (!message.includes(String(event.horario))) {
+    requiredDetails.push(`🕛 Horário: ${event.horario}`);
+  }
+  if (!message.includes(String(event.local))) {
+    requiredDetails.push(`📍 Local: ${event.local}`);
+  }
+  if (!message.includes(String(familia))) {
+    requiredDetails.push(`Convite personalizado para: ${familia}`);
+  }
+  if (!message.includes(String(token))) {
+    requiredDetails.push(`Código de confirmação: ${token}`);
+  }
+  if (!message.includes(confirmationLink)) {
+    requiredDetails.push(`Confirme sua presença: ${confirmationLink}`);
+  }
+  if (requiredDetails.length > 0) {
+    message += `\n\n${requiredDetails.join("\n")}`;
+  }
+
+  return hasBlessingPlaceholder
+    ? message
+    : `${message}\n\n${RELIGIOUS_BLESSING}`;
 }
 
 function hasValue(value) {
