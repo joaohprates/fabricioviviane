@@ -1,4 +1,8 @@
 .env
 node_modules/
+.whatsapp-auth/
+.codex-run/
+.artifact-work/
+outputs/
 tmp-frames/
 tmp-qa/

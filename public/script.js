@@ -67,8 +67,8 @@ motionPreference.addEventListener("change", syncVideo);
 document.addEventListener("visibilitychange", syncVideo);
 syncVideoButton();
 
-// 16h de São Paulo, mesma data e fuso do arquivo de calendário.
-const weddingTime = new Date("2026-11-14T16:00:00-03:00").getTime();
+// 00h00 de São Paulo, mesma data e fuso do arquivo de calendário.
+const weddingTime = new Date("2027-03-06T00:00:00-03:00").getTime();
 function updateCountdown() {
   const seconds = Math.max(0, Math.floor((weddingTime - Date.now()) / 1000));
   const values = [Math.floor(seconds / 86400), Math.floor(seconds / 3600) % 24, Math.floor(seconds / 60) % 60, seconds % 60];
@@ -182,12 +182,11 @@ function resetRsvp() {
   setStep(false);
   setMsg("", "");
 }
-function mostrarDados(token, familia, adultos) {
-  conviteAtual = { token, familia, adultos };
+function mostrarDados(token, familia) {
+  conviteAtual = { token, familia };
   passoCodigo.hidden = true;
   passoDados.hidden = false;
-  const lugares = adultos > 1 ? adultos + " lugares reservados" : "1 lugar reservado";
-  blocoFamilia.textContent = (familia ? "Convite de " + familia : "Convite válido") + " · " + lugares;
+  blocoFamilia.textContent = familia ? "Convite de " + familia : "Convite válido";
   setStep(true);
   if (!document.getElementById("page-confirmar").hidden) inputNome.focus();
 }
@@ -216,7 +215,7 @@ async function validarCodigo() {
       setMsg("erro", apiError(res, data, "Não foi possível validar o convite."), inputCodigo);
       return;
     }
-    mostrarDados(codigo, data.familia, data.adultos);
+    mostrarDados(codigo, data.familia);
   } catch {
     setMsg("erro", "Sem conexão com o servidor. Tente novamente.");
   } finally {
@@ -263,11 +262,8 @@ form.addEventListener("submit", async (event) => {
     const data = await res.json();
     if (!res.ok) { setMsg("erro", apiError(res, data, "Não foi possível confirmar a presença.")); return; }
     const familia = data.familia || conviteAtual.familia || nome;
-    const adultos = data.adultos || conviteAtual.adultos || 1;
     document.getElementById("sucesso-nome").textContent = "Presença confirmada, " + familia + "!";
-    document.getElementById("sucesso-detalhe").textContent = adultos > 1
-      ? adultos + " lugares reservados. Mal podemos esperar para celebrar com vocês!"
-      : "Seu lugar está reservado. Mal podemos esperar para celebrar com você!";
+    document.getElementById("sucesso-detalhe").textContent = "Mal podemos esperar para celebrar com vocês!";
     form.hidden = true;
     btnVoltarConfirmar.hidden = true;
     blocoSucesso.hidden = false;
@@ -290,4 +286,12 @@ inputTelefone.addEventListener("input", () => {
   else if (d.length <= 10) inputTelefone.value = "(" + d.slice(0, 2) + ") " + d.slice(2, 6) + "-" + d.slice(6);
   else inputTelefone.value = "(" + d.slice(0, 2) + ") " + d.slice(2, 7) + "-" + d.slice(7);
 });
+
+const codigoCompartilhado = new URLSearchParams(location.search).get("convite")?.trim();
+if (codigoCompartilhado) {
+  inputCodigo.value = codigoCompartilhado.toUpperCase();
+  if (location.hash === "#confirmar") {
+    setTimeout(validarCodigo, 0);
+  }
+}
 

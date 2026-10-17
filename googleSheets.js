@@ -1,6 +1,6 @@
 import { google } from "googleapis";
 
-async function getSheetsClient() {
+export async function getSheetsClient() {
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -24,16 +24,137 @@ async function getConfirmacoesTab(sheets) {
   return title;
 }
 
-function getConvitesTab() {
+export function getConvitesTab() {
   return process.env.GOOGLE_CONVITES_TAB_NAME || "Convites";
 }
 
-function normalizeToken(value) {
+export function normalizeToken(value) {
   return String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
+}
+
+function normalizeHeader(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/^[a-z]\s*[-—–]\s*/, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+const INVITE_HEADER_ALIASES = {
+  token: ["token", "codigo", "codigo do convite"],
+  familia: ["familia", "nome da familia"],
+  numero: ["numero", "telefone", "celular", "whatsapp"],
+  padrinho: ["padrinho", "padrinhos"],
+  confirmado: ["confirmado", "confirmacao", "data da confirmacao"],
+  envioStatus: ["envio whatsapp", "status do envio", "enviado"],
+  envioData: ["data do envio"],
+  mensagemId: ["id da mensagem", "message id"],
+  envioErro: ["erro do envio"],
+};
+
+export function mapInviteHeaders(headers) {
+  const normalized = headers.map(normalizeHeader);
+  const mapped = {};
+
+  for (const [field, aliases] of Object.entries(INVITE_HEADER_ALIASES)) {
+    const index = normalized.findIndex((header) => aliases.includes(header));
+    if (index >= 0) mapped[field] = index;
+  }
+
+  const required = {
+    token: "Token",
+    familia: "Família",
+    confirmado: "Confirmado",
+  };
+  const missing = Object.entries(required)
+    .filter(([field]) => mapped[field] === undefined)
+    .map(([, label]) => label);
+
+  if (missing.length > 0) {
+    throw new Error(`Colunas obrigatórias ausentes na aba de convites: ${missing.join(", ")}`);
+  }
+
+  return mapped;
+}
+
+export function normalizeWhatsAppNumber(value) {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  if (digits.length === 10 || digits.length === 11) {
+    return `55${digits}`;
+  }
+  if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) {
+    return digits;
+  }
+  return null;
+}
+
+export function findInviteByToken(values, token) {
+  const headers = values[0] || [];
+  const columns = mapInviteHeaders(headers);
+  const target = normalizeToken(token);
+  const matches = [];
+
+  for (let i = 1; i < values.length; i++) {
+    const row = values[i] || [];
+    if (normalizeToken(row[columns.token]) === target) {
+      matches.push({ row, sheetRowIndex: i + 1 });
+    }
+  }
+
+  if (matches.length === 0) {
+    return { valid: false, reason: "not_found" };
+  }
+  if (matches.length > 1) {
+    return { valid: false, reason: "duplicate_token" };
+  }
+
+  const { row, sheetRowIndex } = matches[0];
+  if (String(row[columns.confirmado] ?? "").trim()) {
+    return { valid: false, reason: "already_used" };
+  }
+
+  const phone =
+    columns.numero === undefined
+      ? ""
+      : String(row[columns.numero] ?? "").trim();
+  return {
+    valid: true,
+    familia: String(row[columns.familia] ?? "").trim(),
+    phone,
+    whatsappNumber: normalizeWhatsAppNumber(phone),
+    padrinho:
+      columns.padrinho === undefined
+        ? false
+        : Boolean(String(row[columns.padrinho] ?? "").trim()),
+    sheetRowIndex,
+    confirmedColumnIndex: columns.confirmado,
+  };
+}
+
+export function columnIndexToLetter(index) {
+  if (!Number.isInteger(index) || index < 0) {
+    throw new TypeError("O índice da coluna deve ser um inteiro não negativo");
+  }
+
+  let value = index + 1;
+  let letters = "";
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    letters = String.fromCharCode(65 + remainder) + letters;
+    value = Math.floor((value - 1) / 26);
+  }
+  return letters;
+}
+
+export function sheetRange(tab, range) {
+  return `'${String(tab).replace(/'/g, "''")}'!${range}`;
 }
 
 async function ensureTab(sheets, tab) {
@@ -78,8 +199,9 @@ export async function prepareSheets() {
   await ensureTab(sheets, confirmacoes);
   await ensureHeaders(sheets, convites, [
     "Token",
-    "Familia",
-    "Adultos",
+    "Família",
+    "Número",
+    "Padrinho",
     "Confirmado",
   ]);
   await ensureHeaders(sheets, confirmacoes, [
@@ -98,55 +220,44 @@ export async function validateToken(token) {
 
   const result = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-    range: `${tab}!A:D`,
+    range: sheetRange(tab, "A:Z"),
   });
 
-  const rows = result.data.values || [];
-  const target = normalizeToken(token);
-
-  for (let i = 1; i < rows.length; i++) {
-    const [rowToken, familia, adultos, confirmado] = rows[i];
-    if (normalizeToken(rowToken) === target) {
-      if (confirmado) {
-        return { valid: false, reason: "already_used" };
-      }
-      return {
-        valid: true,
-        familia: familia || "",
-        adultos: parseInt(adultos, 10) || 1,
-        sheetRowIndex: i + 1,
-      };
-    }
-  }
-
-  return { valid: false, reason: "not_found" };
+  return findInviteByToken(result.data.values || [], token);
 }
 
-async function markTokenAsUsed(token, timestamp) {
+export function buildRsvpRow({ token, name, phone, timestamp, criancas }) {
+  return [
+    token,
+    name.trim(),
+    String(phone).trim(),
+    timestamp,
+    "",
+    String(criancas),
+  ];
+}
+
+async function markInviteAsUsed({ rowIndex, columnIndex, timestamp }) {
   const sheets = await getSheetsClient();
   const tab = getConvitesTab();
+  const column = columnIndexToLetter(columnIndex);
 
-  const result = await sheets.spreadsheets.values.get({
+  await sheets.spreadsheets.values.update({
     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-    range: `${tab}!A:A`,
+    range: sheetRange(tab, `${column}${rowIndex}`),
+    valueInputOption: "RAW",
+    requestBody: { values: [[timestamp]] },
   });
-
-  const rows = result.data.values || [];
-  const target = normalizeToken(token);
-  for (let i = 1; i < rows.length; i++) {
-    if (normalizeToken(rows[i][0]) === target) {
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: process.env.GOOGLE_SHEET_ID,
-        range: `${tab}!D${i + 1}`,
-        valueInputOption: "RAW",
-        requestBody: { values: [[timestamp]] },
-      });
-      return;
-    }
-  }
 }
 
-export async function saveRsvpToSheet({ token, name, phone, adultos, criancas }) {
+export async function saveRsvpToSheet({
+  token,
+  name,
+  phone,
+  criancas,
+  inviteRowIndex,
+  confirmedColumnIndex,
+}) {
   const sheets = await getSheetsClient();
   const sheetTitle = await getConfirmacoesTab(sheets);
 
@@ -154,14 +265,13 @@ export async function saveRsvpToSheet({ token, name, phone, adultos, criancas })
     timeZone: "America/Sao_Paulo",
   });
 
-  const row = [
+  const row = buildRsvpRow({
     token,
-    name.trim(),
-    String(phone).trim(),
+    name,
+    phone,
     timestamp,
-    String(adultos),
-    String(criancas),
-  ];
+    criancas,
+  });
 
   const appendResult = await sheets.spreadsheets.values.append({
     spreadsheetId: process.env.GOOGLE_SHEET_ID,
@@ -171,7 +281,11 @@ export async function saveRsvpToSheet({ token, name, phone, adultos, criancas })
     requestBody: { values: [row] },
   });
 
-  await markTokenAsUsed(token, timestamp);
+  await markInviteAsUsed({
+    rowIndex: inviteRowIndex,
+    columnIndex: confirmedColumnIndex,
+    timestamp,
+  });
 
   return {
     row,

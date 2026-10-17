@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#2a1917" />
+  <title>Ateliê de Convites · F &amp; V</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin-whatsapp.css" />
+</head>
+<body>
+  <div class="paper-noise" aria-hidden="true"></div>
+  <header class="admin-header">
+    <a class="brand" href="/" aria-label="Voltar ao site do casamento"><span>F</span><i>&amp;</i><span>V</span></a>
+    <div>
+      <p class="kicker">OPERAÇÃO PRIVADA</p>
+      <h1>Ateliê de convites</h1>
+    </div>
+    <span class="header-note">WhatsApp dos noivos</span>
+  </header>
+
+  <main>
+    <section class="access-card" id="access-card">
+      <p class="section-index">00 / ACESSO</p>
+      <h2>Entre na sala de envio.</h2>
+      <p>Use o token administrativo configurado no servidor. Ele fica apenas nesta aba durante a sessão.</p>
+      <form id="access-form">
+        <label for="admin-token">Token administrativo</label>
+        <div class="access-row">
+          <input id="admin-token" type="password" autocomplete="current-password" required />
+          <button class="button button-dark" type="submit">Acessar</button>
+        </div>
+        <p class="form-message" id="access-message" role="status"></p>
+      </form>
+    </section>
+
+    <div id="workspace" hidden>
+      <section class="intro-strip">
+        <div>
+          <p class="kicker">ENVIO ASSISTIDO</p>
+          <h2>Uma fila pequena.<br><em>Cada convite no lugar certo.</em></h2>
+        </div>
+        <p>Conecte o aparelho, confira a mensagem e libere um lote. O sistema ignora números inválidos, tokens repetidos e convites já marcados como enviados.</p>
+      </section>
+
+      <div class="dashboard-grid">
+        <section class="panel connection-panel">
+          <div class="panel-heading">
+            <div><p class="section-index">01 / CONEXÃO</p><h3>Celular dos noivos</h3></div>
+            <span class="status-pill" id="connection-pill">Desconectado</span>
+          </div>
+          <div class="qr-stage" id="qr-stage">
+            <div class="qr-placeholder" id="qr-placeholder">
+              <span class="qr-mark">⌁</span>
+              <p>O QR Code aparece aqui.</p>
+            </div>
+            <img id="qr-image" alt="QR Code para conectar o WhatsApp dos noivos" hidden />
+          </div>
+          <p class="connection-copy" id="connection-copy">No celular: WhatsApp → Aparelhos conectados → Conectar aparelho.</p>
+          <div class="button-row">
+            <button class="button button-accent" id="connect-button" type="button">Gerar QR Code</button>
+            <button class="button button-quiet" id="disconnect-button" type="button">Desconectar</button>
+          </div>
+        </section>
+
+        <section class="panel queue-panel">
+          <div class="panel-heading">
+            <div><p class="section-index">02 / LISTA</p><h3>Fila da planilha</h3></div>
+            <button class="text-button" id="refresh-button" type="button">Atualizar ↻</button>
+          </div>
+          <div class="metrics" aria-live="polite">
+            <div><strong id="ready-count">—</strong><span>prontos</span></div>
+            <div><strong id="sent-count">—</strong><span>enviados</span></div>
+            <div><strong id="issue-count">—</strong><span>revisar</span></div>
+          </div>
+          <div class="issues" id="issues-list"><p>Carregue a planilha para ver a fila.</p></div>
+          <div class="progress-wrap" id="progress-wrap" hidden>
+            <div class="progress-copy"><span>Progresso do lote</span><strong id="progress-label">0 / 0</strong></div>
+            <div class="progress-track"><span id="progress-bar"></span></div>
+          </div>
+        </section>
+
+        <section class="panel message-panel">
+          <div class="panel-heading">
+            <div><p class="section-index">03 / MENSAGEM</p><h3>Prévia do convite</h3></div>
+            <span class="paper-clip" aria-hidden="true"></span>
+          </div>
+          <pre id="message-preview">A primeira mensagem pronta aparecerá aqui.</pre>
+          <p class="template-note">Variáveis disponíveis no servidor: <code>{familia}</code>, <code>{link}</code> e <code>{codigo}</code>.</p>
+        </section>
+
+        <section class="panel send-panel">
+          <div class="panel-heading">
+            <div><p class="section-index">04 / LIBERAÇÃO</p><h3>Enviar um lote</h3></div>
+          </div>
+          <label class="field-label" for="send-limit">Quantidade neste lote</label>
+          <input class="number-input" id="send-limit" type="number" min="1" value="20" />
+          <p class="send-cadence" id="send-cadence">Intervalo controlado entre mensagens.</p>
+          <label class="review-check">
+            <input id="review-check" type="checkbox" />
+            <span>Revisei a mensagem, a planilha e o aparelho conectado.</span>
+          </label>
+          <button class="button button-send" id="send-button" type="button" disabled>Iniciar envio</button>
+          <button class="button button-stop" id="stop-button" type="button" disabled>Parar após a mensagem atual</button>
+          <p class="send-message" id="send-message" role="status"></p>
+          <p class="risk-note">Baileys é uma integração não oficial. Conversas anteriores ajudam no contexto, mas não garantem ausência de restrições do WhatsApp.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="/admin-whatsapp.js" defer></script>
+</body>
+</html>

@@ -5,11 +5,11 @@ CALSCALE:GREGORIAN
 BEGIN:VEVENT
 UID:fabricio-viviane-20261114@nosso-casamento
 DTSTAMP:20260907T160000Z
-DTSTART:20261114T190000Z
+DTSTART:20270306T030000Z
 SUMMARY:Casamento de Fabricio e Viviane
-DESCRIPTION:Cerimônia às 16h (horário de São Paulo).
+DESCRIPTION:Cerimônia às 00h00 (horário de São Paulo).
  Recepção e festa no mesmo local.
-LOCATION:Espaço Jardim das Flores\, Rua das Acácias\, 123
-  - São Paulo/SP
+LOCATION:Av. Cristóvão Colombo\, 87\, Jardim Jaguaruna
+  - Marialva/PR\, 86990-000
 END:VEVENT
 END:VCALENDAR
