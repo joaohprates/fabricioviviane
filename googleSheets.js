@@ -95,6 +95,19 @@ export function normalizeWhatsAppNumber(value) {
   return null;
 }
 
+function isAffirmative(value) {
+  return ["sim", "s", "yes", "true", "1", "x"].includes(
+    normalizeToken(value)
+  );
+}
+
+export function buildPublicInvitePayload(invite) {
+  return {
+    familia: invite.familia,
+    padrinho: invite.padrinho === true,
+  };
+}
+
 export function findInviteByToken(values, token) {
   const headers = values[0] || [];
   const columns = mapInviteHeaders(headers);
@@ -132,7 +145,7 @@ export function findInviteByToken(values, token) {
     padrinho:
       columns.padrinho === undefined
         ? false
-        : Boolean(String(row[columns.padrinho] ?? "").trim()),
+        : isAffirmative(row[columns.padrinho]),
     sheetRowIndex,
     confirmedColumnIndex: columns.confirmado,
   };

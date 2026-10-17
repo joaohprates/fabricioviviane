@@ -154,8 +154,19 @@ const btnTrocar = document.getElementById("rsvp-trocar");
 const msg = document.getElementById("rsvp-msg");
 const blocoSucesso = document.getElementById("rsvp-sucesso");
 const btnVoltarConfirmar = document.getElementById("voltar-confirmar");
+const godparentsBadge = document.getElementById("godparents-badge");
+const godparentsNote = document.getElementById("godparents-note");
+const themeColor = document.querySelector('meta[name="theme-color"]');
 const validateLabel = btnValidar.innerHTML;
 let conviteAtual = null;
+
+function aplicarExperienciaPadrinhos(ativa) {
+  const isGodparent = ativa === true;
+  document.body.classList.toggle("theme-padrinhos", isGodparent);
+  godparentsBadge.hidden = !isGodparent;
+  godparentsNote.hidden = !isGodparent;
+  themeColor?.setAttribute("content", isGodparent ? "#173b5e" : "#faf8f3");
+}
 
 function setStep(details) {
   document.getElementById("step-code").classList.toggle("is-current", !details);
@@ -182,8 +193,9 @@ function resetRsvp() {
   setStep(false);
   setMsg("", "");
 }
-function mostrarDados(token, familia) {
-  conviteAtual = { token, familia };
+function mostrarDados(token, familia, padrinho = false) {
+  conviteAtual = { token, familia, padrinho };
+  aplicarExperienciaPadrinhos(padrinho);
   passoCodigo.hidden = true;
   passoDados.hidden = false;
   blocoFamilia.textContent = familia ? "Convite de " + familia : "Convite válido";
@@ -215,7 +227,7 @@ async function validarCodigo() {
       setMsg("erro", apiError(res, data, "Não foi possível validar o convite."), inputCodigo);
       return;
     }
-    mostrarDados(codigo, data.familia);
+    mostrarDados(codigo, data.familia, data.padrinho);
   } catch {
     setMsg("erro", "Sem conexão com o servidor. Tente novamente.");
   } finally {
@@ -232,6 +244,7 @@ inputCodigo.addEventListener("keydown", (event) => {
 btnTrocar.addEventListener("click", () => {
   if (btnConfirmar.disabled) return;
   conviteAtual = null;
+  aplicarExperienciaPadrinhos(false);
   passoDados.hidden = true;
   passoCodigo.hidden = false;
   setStep(false);

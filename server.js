@@ -2,7 +2,12 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import { prepareSheets, saveRsvpToSheet, validateToken } from "./googleSheets.js";
+import {
+  buildPublicInvitePayload,
+  prepareSheets,
+  saveRsvpToSheet,
+  validateToken,
+} from "./googleSheets.js";
 import {
   InviteDispatchManager,
   buildInviteMessage,
@@ -206,7 +211,7 @@ app.get("/api/validate-token", async (req, res) => {
       return res.status(404).json({ error: "Convite não encontrado" });
     }
 
-    res.json({ familia: result.familia });
+    res.json(buildPublicInvitePayload(result));
   } catch (err) {
     console.error("Validate token error:", err.message || err);
     const payload = sheetsErrorPayload(err);

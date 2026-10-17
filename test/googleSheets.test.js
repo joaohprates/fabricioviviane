@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildPublicInvitePayload,
   buildRsvpRow,
   columnIndexToLetter,
   findInviteByToken,
@@ -54,6 +55,34 @@ test("não interpreta Padrinho como confirmação", () => {
   const result = findInviteByToken(values, "padrinhos");
   assert.equal(result.valid, true);
   assert.equal(result.padrinho, true);
+});
+
+test("interpreta explicitamente Não como convite comum", () => {
+  const values = [
+    headers,
+    ["convidados", "Família Convidada", "44999999999", "Não", "2", ""],
+  ];
+
+  const result = findInviteByToken(values, "convidados");
+  assert.equal(result.valid, true);
+  assert.equal(result.padrinho, false);
+});
+
+test("expõe somente os dados públicos necessários para personalizar o convite", () => {
+  assert.deepEqual(
+    buildPublicInvitePayload({
+      familia: "Casal Padrinho",
+      padrinho: true,
+      phone: "44999999999",
+      whatsappNumber: "5544999999999",
+      sheetRowIndex: 3,
+      confirmedColumnIndex: 5,
+    }),
+    {
+      familia: "Casal Padrinho",
+      padrinho: true,
+    }
+  );
 });
 
 test("considera confirmado apenas quando a coluna Confirmado está preenchida", () => {
