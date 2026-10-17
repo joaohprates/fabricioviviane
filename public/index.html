@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#faf8f3" />
+  <meta name="description" content="Fabricio e Viviane vão se casar! Reserve 14 de novembro de 2026, conheça os detalhes e confirme sua presença." />
+  <title>Fabricio &amp; Viviane — Nosso Casamento</title>
+  <link rel="icon" type="image/svg+xml" href="media/monograma.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@400;450;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Pular para o conteúdo</a>
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6" /></symbol>
+      <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4m8-4v4M8 14h3m2 0h3m-8 3h3"/></symbol>
+      <symbol id="icon-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+      <symbol id="icon-heart" viewBox="0 0 24 24"><path d="m12 20-8-8C-2 5 7 0 12 7c5-7 14-2 8 5Z"/></symbol>
+      <symbol id="icon-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13m0-13C2 8 5 0 9 4l3 4Zm0 0c10 0 7-8 3-4l-3 4Z"/></symbol>
+      <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="icon-branch" viewBox="0 0 120 150"><path d="M24 144C44 107 63 67 86 9M43 111C16 109 13 90 15 76c21 5 32 14 28 35Zm13-27C31 76 34 56 38 44c18 10 25 22 18 40Zm13-27C52 45 60 27 67 18c12 13 15 22 2 39Zm-29 60c26 4 41-10 45-25-22-2-37 7-45 25Zm18-37c26 4 40-11 42-24-23-1-35 9-42 24Zm14-32c23 0 34-16 34-29-20 1-31 13-34 29Z"/></symbol>
+    </defs>
+  </svg>
+  <header class="site-header">
+    <a class="monogram" href="#home" data-goto="home" aria-label="Fabricio e Viviane, início">F<span>&amp;</span>V</a>
+    <nav class="main-nav" aria-label="Navegação principal">
+      <a href="#home" data-goto="home" aria-current="page">Início</a>
+      <a href="#info" data-goto="info">O grande dia</a>
+      <a href="#presentes" data-goto="presentes">Presentes</a>
+    </nav>
+    <a class="button button-small button-outline header-rsvp" href="#confirmar" data-goto="confirmar">Confirmar presença <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></a>
+  </header>
+  <main id="app" tabindex="-1">
+    <section class="page page-home active" id="page-home" aria-labelledby="home-title">
+      <div class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow reveal"><span class="small-line"></span> O começo do nosso para sempre</p>
+          <h1 class="couple reveal" id="home-title" tabindex="-1"><span>Fabricio</span><span class="couple-second"><i>&amp;</i> Viviane</span></h1>
+          <p class="hero-message reveal">Algumas histórias merecem ser celebradas.<br>A nossa fica ainda mais bonita com você.</p>
+          <div class="hero-date reveal"><span class="date-day">14</span><div><span>Novembro de 2026</span><span class="date-detail">Sábado · às 16h</span></div></div>
+          <div class="hero-actions reveal">
+            <a class="button button-primary" href="#confirmar" data-goto="confirmar">Eu vou celebrar <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></a>
+            <a class="text-link" href="#info" data-goto="info">Conheça os detalhes <span aria-hidden="true">↗</span></a>
+          </div>
+          <p class="hero-footnote reveal"><svg class="icon" aria-hidden="true"><use href="#icon-heart"/></svg> Feito de amor. Para quem faz parte da nossa história.</p>
+        </div>
+        <figure class="hero-portrait reveal">
+          <div class="portrait-outline" aria-hidden="true"></div>
+          <div class="home-film">
+            <video id="home-video" class="home-video" muted loop playsinline preload="metadata" poster="media/encontro-steady-poster.jpg" aria-label="Vídeo do encontro de Fabricio e Viviane no jardim"><source src="media/encontro-steady.mp4" type="video/mp4" /></video>
+            <div class="film-shade" aria-hidden="true"></div>
+            <div class="film-caption"><span>NOSSO MELHOR ENCONTRO</span><p>Foi sempre <i>você.</i></p></div>
+            <button class="video-toggle" id="video-toggle" type="button" aria-label="Reproduzir vídeo" aria-pressed="false"><span class="video-toggle-icon" aria-hidden="true">▶</span><span class="video-toggle-label">Reproduzir</span></button>
+          </div>
+          <div class="date-seal" aria-label="14 de novembro de 2026"><span>GUARDE A DATA</span><strong>14.11</strong><span>2026 · F &amp; V</span></div>
+          <svg class="portrait-branch" aria-hidden="true"><use href="#icon-branch"/></svg>
+          <figcaption>Uma vida inteira de nós dois.</figcaption>
+        </figure>
+      </div>
+      <div class="countdown-section">
+        <div class="countdown-heading"><span class="eyebrow" id="countdown-eyebrow">CADA DIA MAIS PERTO</span><h2 id="countdown-heading">Contando os dias<br> para dizer <i>sim.</i></h2></div>
+        <div class="countdown" role="group" aria-label="Contagem regressiva para 14 de novembro de 2026 às 16 horas">
+          <div><span id="count-days">—</span><span>Dias</span></div><span class="count-separator" aria-hidden="true">:</span>
+          <div><span id="count-hours">—</span><span>Horas</span></div><span class="count-separator" aria-hidden="true">:</span>
+          <div><span id="count-minutes">—</span><span>Minutos</span></div><span class="count-separator" aria-hidden="true">:</span>
+          <div><span id="count-seconds">—</span><span>Segundos</span></div>
+        </div>
+        <a class="calendar-link" href="media/casamento.ics" download><svg class="icon" aria-hidden="true"><use href="#icon-calendar"/></svg> Salvar na agenda <span aria-hidden="true">↗</span></a>
+      </div>
+      <section class="home-guide" aria-labelledby="guide-title">
+        <div class="section-heading"><p class="eyebrow">COM CARINHO, CADA DETALHE</p><h2 id="guide-title">Tudo para viver esse dia com a gente.</h2></div>
+        <div class="guide-grid">
+          <a href="#info" data-goto="info" class="guide-card"><span class="guide-number">01 / O ENCONTRO</span><svg class="icon guide-icon" aria-hidden="true"><use href="#icon-pin"/></svg><h3>O grande dia</h3><p>Quando, onde e como chegar para celebrar esse momento.</p><span class="guide-link">Veja os detalhes <span aria-hidden="true">↗</span></span></a>
+          <a href="#presentes" data-goto="presentes" class="guide-card"><span class="guide-number">02 / UM CARINHO</span><svg class="icon guide-icon" aria-hidden="true"><use href="#icon-gift"/></svg><h3>Presentes</h3><p>Sua presença é o essencial. Seu carinho vira uma lembrança.</p><span class="guide-link">Conheça as ideias <span aria-hidden="true">↗</span></span></a>
+          <a href="#confirmar" data-goto="confirmar" class="guide-card guide-card-featured"><span class="guide-number">03 / SEU LUGAR AQUI</span><svg class="icon guide-icon" aria-hidden="true"><use href="#icon-heart"/></svg><h3>Vamos celebrar?</h3><p>Tem um lugar especial esperando por você nesse dia.</p><span class="guide-link">Confirme sua presença <span aria-hidden="true">↗</span></span></a>
+        </div>
+      </section>
+    </section>
+    <section class="page" id="page-info" aria-labelledby="info-title" hidden>
+      <div class="page-inner">
+        <a class="back-link" href="#home" data-goto="home">← Nosso casamento</a>
+        <div class="page-heading"><p class="eyebrow">14 DE NOVEMBRO DE 2026</p><h2 class="page-title" id="info-title" tabindex="-1">Um dia para guardar<br><i>para sempre.</i></h2><p class="page-intro">Preparamos cada detalhe para viver esse momento com as pessoas que amamos.</p></div>
+        <div class="info-grid">
+          <article class="info-card"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"/></svg><p class="eyebrow">GUARDE A DATA</p><h3>14 de novembro</h3><p>Sábado, 2026</p><a class="text-link" href="media/casamento.ics" download>Adicionar à agenda ↗</a></article>
+          <article class="info-card"><svg class="icon" aria-hidden="true"><use href="#icon-clock"/></svg><p class="eyebrow">O NOSSO SIM</p><h3>Às 16 horas</h3><p>Cerimônia, seguida de recepção<br>e festa no mesmo local.</p></article>
+          <article class="info-card"><svg class="icon" aria-hidden="true"><use href="#icon-pin"/></svg><p class="eyebrow">NOSSO ENCONTRO</p><h3>Jardim das Flores</h3><p>Rua das Acácias, 123 — Jardins<br>São Paulo / SP</p></article>
+        </div>
+        <div class="location-section">
+          <div class="location-copy"><p class="eyebrow">O CAMINHO ATÉ NÓS</p><h3>Esperamos você<br><i>aqui.</i></h3><p>Espaço Jardim das Flores</p><p class="muted">Rua das Acácias, 123 — Jardins<br>São Paulo / SP</p><a class="button button-outline" href="https://www.google.com/maps/search/?api=1&query=Rua+das+Ac%C3%A1cias+123+S%C3%A3o+Paulo" target="_blank" rel="noopener noreferrer">Traçar minha rota <span aria-hidden="true">↗</span></a></div>
+          <div class="mapa-frame"><iframe title="Mapa do local do casamento" src="https://www.google.com/maps?q=Rua+das+Ac%C3%A1cias+123+S%C3%A3o+Paulo&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>
+        </div>
+        <div class="section-invitation"><span>O dia está marcado. Só falta o seu sim.</span><a class="button button-primary" href="#confirmar" data-goto="confirmar">Confirmar presença <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></a></div>
+      </div>
+    </section>
+    <section class="page" id="page-presentes" aria-labelledby="presentes-title" hidden>
+      <div class="page-inner">
+        <a class="back-link" href="#home" data-goto="home">← Nosso casamento</a>
+        <div class="page-heading"><p class="eyebrow">CARINHO QUE VIRA LEMBRANÇA</p><h2 class="page-title" id="presentes-title" tabindex="-1">O melhor presente<br><i>é ter você aqui.</i></h2><p class="page-intro">Se quiser nos mimar um pouquinho mais, reunimos algumas ideias para a nossa nova vida a dois.</p></div>
+        <div class="presentes-opcoes">
+          <article class="opcao-card"><span class="gift-category">01 / PARA O NOSSO LAR</span><svg class="icon opcao-icon" aria-hidden="true"><use href="#icon-gift"/></svg><h3>Uma casa, muitos começos.</h3><p>Estamos preparando nossa lista de presentes com carinho. Em breve, você encontra o link por aqui.</p><span class="availability">Lista em preparação</span></article>
+          <button type="button" class="opcao-card opcao-card-emotional" id="btn-emocionais" aria-expanded="false" aria-controls="lista-emocionais"><span class="gift-category">02 / PARA A NOSSA HISTÓRIA</span><svg class="icon opcao-icon" aria-hidden="true"><use href="#icon-heart"/></svg><h3>Memórias para colecionar.</h3><p>De um jantar especial a uma carta para o futuro. Pequenos gestos que ficam para sempre.</p><span class="opcao-cta">Explorar as ideias <span aria-hidden="true">↓</span></span></button>
+        </div>
+        <section class="lista-emocionais" id="lista-emocionais" aria-labelledby="gift-list-title" hidden><p class="eyebrow">ESCOLHA COM O CORAÇÃO</p><h3 id="gift-list-title" class="lista-titulo">Presentes com significado</h3><p class="lista-sub">Salve suas ideias favoritas. A seleção fica neste dispositivo e não envia um presente nem faz uma reserva.</p><ul class="gift-list" id="gift-list"></ul><p id="gift-feedback" class="gift-feedback" role="status" aria-live="polite"></p></section>
+        <p class="gifts-note"><svg class="icon" aria-hidden="true"><use href="#icon-heart"/></svg> A sua companhia já faz esse dia ser especial.</p>
+      </div>
+    </section>
+    <section class="page" id="page-confirmar" aria-labelledby="confirmar-title" hidden>
+      <div class="page-inner">
+        <a class="back-link" href="#home" data-goto="home">← Nosso casamento</a>
+        <div class="rsvp-layout">
+          <div class="rsvp-copy"><p class="eyebrow">TEM UM LUGAR SEU NESSA HISTÓRIA</p><h2 class="page-title" id="confirmar-title" tabindex="-1">Vai ser mais bonito<br><i>com você.</i></h2><p class="page-intro">Estamos contando os dias para celebrar juntos. Confirme sua presença e venha fazer parte desse momento.</p><div class="rsvp-date"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"/></svg><span>14 de novembro de 2026 · 16h</span></div><div class="rsvp-signature">Com amor,<br><span>Fabricio &amp; Viviane</span></div><svg class="rsvp-branch" aria-hidden="true"><use href="#icon-branch"/></svg></div>
+          <div class="rsvp-panel">
+            <div class="rsvp-stepper" aria-label="Etapas da confirmação"><span class="is-current" id="step-code"><b>01</b> Seu convite</span><span class="step-line" aria-hidden="true"></span><span id="step-details"><b>02</b> Sua presença</span></div>
+            <form class="rsvp-form" id="rsvp-form" novalidate>
+              <div id="rsvp-passo-codigo"><h3>Vamos confirmar?</h3><p class="form-intro">É rapidinho. Use o código que enviamos junto com o seu convite.</p><label class="rsvp-label" for="codigo">Código do convite</label><input type="text" id="codigo" name="codigo" class="rsvp-input input-code" placeholder="Ex.: FV-1234" autocomplete="off" maxlength="32" aria-describedby="codigo-hint" required /><p class="rsvp-hint" id="codigo-hint">Cada convite tem um código exclusivo.</p><button type="button" class="button button-primary rsvp-btn" id="rsvp-btn-validar">Encontrar meu convite <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button></div>
+              <div id="rsvp-passo-dados" hidden><h3>Você vem com a gente.</h3><div class="rsvp-familia" id="rsvp-familia"></div><label class="rsvp-label" for="nome">Seu nome</label><input type="text" id="nome" name="nome" class="rsvp-input" placeholder="Nome de quem confirma" autocomplete="name" maxlength="120" required /><label class="rsvp-label" for="telefone">Celular com DDD</label><input type="tel" id="telefone" name="telefone" class="rsvp-input" placeholder="(00) 00000-0000" autocomplete="tel" inputmode="tel" maxlength="16" required /><label class="rsvp-label" for="criancas">Quantidade de crianças (opcional)</label><input type="number" id="criancas" name="criancas" class="rsvp-input" min="0" max="10" step="1" value="0" /><div class="rsvp-acoes"><button type="submit" class="button button-primary rsvp-btn" id="rsvp-btn-confirmar">Confirmar presença</button><button type="button" class="back-link" id="rsvp-trocar">← Usar outro código</button></div></div>
+              <div class="rsvp-msg" id="rsvp-msg" role="status" aria-live="polite"></div>
+            </form>
+            <div class="rsvp-sucesso" id="rsvp-sucesso" hidden tabindex="-1"><svg viewBox="0 0 24 24" class="sucesso-icon icon" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7 12 3 3 7-7"/></svg><h3 id="sucesso-nome">Presença confirmada!</h3><p id="sucesso-detalhe">Mal podemos esperar para celebrar com você.</p><a class="button button-outline" href="media/casamento.ics" download>Salvar na agenda <svg class="icon" aria-hidden="true"><use href="#icon-calendar"/></svg></a><button type="button" class="back-link" data-goto="home">← Voltar ao início</button></div>
+            <p class="rsvp-help" id="voltar-confirmar">Não encontrou seu código? Fale com os noivos.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="monogram" href="#home" data-goto="home" aria-label="Voltar ao início">F<span>&amp;</span>V</a><p>Com amor, Fabricio &amp; Viviane</p><span>14 . 11 . 2026</span></footer>
+  <noscript><p class="noscript-note">Para navegar e confirmar sua presença, ative o JavaScript no navegador.</p></noscript>
+</body>
+</html>
+
