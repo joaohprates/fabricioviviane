@@ -38,3 +38,14 @@ export function requirePublicWeddingUrl(value) {
   }
   return url.toString();
 }
+
+export function resolveWeddingSiteUrl(env = process.env) {
+  if (env.WEDDING_SITE_URL?.trim()) return env.WEDDING_SITE_URL.trim();
+
+  const vercelHost = (
+    env.VERCEL_PROJECT_PRODUCTION_URL || env.VERCEL_URL || ""
+  ).trim();
+  if (vercelHost) return `https://${vercelHost}`;
+
+  return "https://fabricioviviane.vercel.app";
+}

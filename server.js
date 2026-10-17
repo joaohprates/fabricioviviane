@@ -17,7 +17,11 @@ import {
   getInviteDispatchPlan,
   recordInviteDispatchStatus,
 } from "./inviteSheetStore.js";
-import { isAdminTokenValid, requirePublicWeddingUrl } from "./adminSecurity.js";
+import {
+  isAdminTokenValid,
+  requirePublicWeddingUrl,
+  resolveWeddingSiteUrl,
+} from "./adminSecurity.js";
 import { whatsappService } from "./whatsappService.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -40,7 +44,7 @@ function inviteTemplate() {
 }
 
 function weddingSiteUrl() {
-  return requirePublicWeddingUrl(process.env.WEDDING_SITE_URL);
+  return requirePublicWeddingUrl(resolveWeddingSiteUrl());
 }
 
 const inviteDispatchManager = new InviteDispatchManager({
@@ -112,7 +116,7 @@ app.get("/api/admin/whatsapp/status", adminOnly, (_req, res) => {
     settings: {
       maxPerRun: MAX_INVITES_PER_RUN,
       intervalSeconds: Math.round(SEND_INTERVAL_MS / 1000),
-      siteUrlConfigured: Boolean(process.env.WEDDING_SITE_URL),
+      siteUrlConfigured: Boolean(resolveWeddingSiteUrl()),
     },
   });
 });
