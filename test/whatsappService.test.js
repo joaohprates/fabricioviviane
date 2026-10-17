@@ -1,8 +1,45 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
+import path from "node:path";
 
-import { WhatsAppService } from "../whatsappService.js";
+import {
+  WhatsAppService,
+  resolveWhatsAppAuthDir,
+} from "../whatsappService.js";
+
+test("usa o diretório temporário gravável no Vercel", () => {
+  assert.equal(
+    resolveWhatsAppAuthDir({
+      env: { VERCEL: "1" },
+      baseDir: "/var/task",
+      tempDir: "/tmp",
+    }),
+    path.join("/tmp", "whatsapp-auth")
+  );
+});
+
+test("respeita um diretório de autenticação configurado", () => {
+  assert.equal(
+    resolveWhatsAppAuthDir({
+      env: { WHATSAPP_AUTH_DIR: "/dados/whatsapp" },
+      baseDir: "/var/task",
+      tempDir: "/tmp",
+    }),
+    path.resolve("/dados/whatsapp")
+  );
+});
+
+test("redireciona configuração relativa para o temporário no Vercel", () => {
+  assert.equal(
+    resolveWhatsAppAuthDir({
+      env: { VERCEL: "1", WHATSAPP_AUTH_DIR: ".whatsapp-auth" },
+      baseDir: "/var/task",
+      tempDir: "/tmp",
+    }),
+    path.join("/tmp", ".whatsapp-auth")
+  );
+});
 
 function createHarness({ exists = true } = {}) {
   const ev = new EventEmitter();

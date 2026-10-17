@@ -1,3 +1,4 @@
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import makeWASocket, {
@@ -9,6 +10,24 @@ import QRCode from "qrcode";
 import pino from "pino";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export function resolveWhatsAppAuthDir({
+  env = process.env,
+  baseDir = __dirname,
+  tempDir = os.tmpdir(),
+} = {}) {
+  const configured = env.WHATSAPP_AUTH_DIR?.trim();
+  const isServerless = Boolean(env.VERCEL || env.AWS_LAMBDA_FUNCTION_NAME);
+
+  if (isServerless) {
+    if (configured && path.isAbsolute(configured) && configured.startsWith(tempDir)) {
+      return configured;
+    }
+    return path.join(tempDir, path.basename(configured || "whatsapp-auth"));
+  }
+  if (configured) return path.resolve(configured);
+  return path.join(baseDir, ".whatsapp-auth");
+}
 
 function disconnectStatusCode(lastDisconnect) {
   return (
@@ -28,7 +47,7 @@ function accountLabel(user) {
 
 export class WhatsAppService {
   constructor({
-    authDir = process.env.WHATSAPP_AUTH_DIR || path.join(__dirname, ".whatsapp-auth"),
+    authDir = resolveWhatsAppAuthDir(),
     makeSocket = makeWASocket,
     useAuthState = useMultiFileAuthState,
     qrToDataUrl = (value) => QRCode.toDataURL(value, {
