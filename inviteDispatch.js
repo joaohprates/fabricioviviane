@@ -7,7 +7,7 @@ import {
 export const DEFAULT_WEDDING_DETAILS = Object.freeze({
   noivos: "Fabricio & Viviane",
   data: "6 de março de 2027",
-  horario: "00h00",
+  horario: "10h30 da manhã",
   local: "Av. Cristóvão Colombo, 87 — Jardim Jaguaruna, Marialva/PR",
 });
 

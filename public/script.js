@@ -67,8 +67,8 @@ motionPreference.addEventListener("change", syncVideo);
 document.addEventListener("visibilitychange", syncVideo);
 syncVideoButton();
 
-// 00h00 de São Paulo, mesma data e fuso do arquivo de calendário.
-const weddingTime = new Date("2027-03-06T00:00:00-03:00").getTime();
+// 10h30 de São Paulo, mesma data e fuso do arquivo de calendário.
+const weddingTime = new Date("2027-03-06T10:30:00-03:00").getTime();
 function updateCountdown() {
   const seconds = Math.max(0, Math.floor((weddingTime - Date.now()) / 1000));
   const values = [Math.floor(seconds / 86400), Math.floor(seconds / 3600) % 24, Math.floor(seconds / 60) % 60, seconds % 60];
