@@ -121,6 +121,7 @@ function renderPreview(data) {
     duplicate_token: "Tokens repetidos",
     invalid_phone: "Números ausentes ou inválidos",
     missing_token: "Linhas sem token",
+    pending_review: "Envios que precisam de revisão",
   };
   const entries = Object.entries(data.issueCounts || {}).filter(([, count]) => count > 0);
   issuesList.replaceChildren();

@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { waitUntil } from "@vercel/functions";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -180,9 +181,12 @@ app.post("/api/admin/whatsapp/send", adminOnly, (req, res) => {
       1,
       Math.min(MAX_INVITES_PER_RUN, Number(req.body?.limit) || MAX_INVITES_PER_RUN)
     );
-    void inviteDispatchManager.start({ limit }).catch((error) => {
+    const dispatchPromise = inviteDispatchManager.start({ limit }).catch((error) => {
       console.error("Falha na fila de convites:", error?.message || error);
     });
+    if (process.env.VERCEL) {
+      waitUntil(dispatchPromise);
+    }
     res.status(202).json({ dispatch: inviteDispatchManager.getStatus() });
   } catch (error) {
     adminError(res, error, "Erro ao iniciar o envio dos convites");

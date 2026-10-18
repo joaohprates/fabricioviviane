@@ -137,6 +137,10 @@ export function planInviteDispatch(values) {
       sent.push({ rowIndex, token, familia });
       continue;
     }
+    if (status) {
+      issues.push({ rowIndex, reason: "pending_review", status });
+      continue;
+    }
     if (!normalizedToken) {
       issues.push({ rowIndex, reason: "missing_token" });
       continue;
@@ -254,6 +258,12 @@ export class InviteDispatchManager {
         const timestamp = formatTimestamp(this.now());
 
         try {
+          await this.recordStatus(invite.rowIndex, {
+            status: "Enviando",
+            timestamp,
+            messageId: "",
+            error: "",
+          });
           const result = await this.sendMessage(
             invite.whatsappNumber,
             this.buildMessage(invite)
@@ -268,7 +278,7 @@ export class InviteDispatchManager {
         } catch (error) {
           const message = String(error?.message || error || "Erro desconhecido").slice(0, 500);
           await this.recordStatus(invite.rowIndex, {
-            status: "Erro",
+            status: "Revisar",
             timestamp,
             messageId: "",
             error: message,
