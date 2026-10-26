@@ -8,7 +8,8 @@ export const DEFAULT_WEDDING_DETAILS = Object.freeze({
   noivos: "Fabricio & Viviane",
   data: "6 de março de 2027",
   horario: "10h30 da manhã",
-  local: "Av. Cristóvão Colombo, 87 — Jardim Jaguaruna, Marialva/PR",
+  local: "Chácara Attenas — Marialva/PR",
+  mapa: "https://www.google.com/maps?q=-23.4965377,-51.7706713&z=17&hl=en",
 });
 
 export const RELIGIOUS_BLESSING =
@@ -21,6 +22,7 @@ Com a bênção de Deus, nós, {noivos}, queremos convidar vocês para celebrar 
 📅 Data: {data}
 🕛 Horário: {horario}
 📍 Local: {local}
+🗺️ Mapa: {mapa}
 
 Convite personalizado para: {familia}
 Código de confirmação: {codigo}
@@ -62,6 +64,7 @@ export function buildInviteMessage({
     "{data}": event.data,
     "{horario}": event.horario,
     "{local}": event.local,
+    "{mapa}": event.mapa,
     "{bencao}": RELIGIOUS_BLESSING,
   };
 
@@ -83,6 +86,9 @@ export function buildInviteMessage({
   }
   if (!message.includes(String(event.local))) {
     requiredDetails.push(`📍 Local: ${event.local}`);
+  }
+  if (!message.includes(String(event.mapa))) {
+    requiredDetails.push(`🗺️ Mapa: ${event.mapa}`);
   }
   if (!message.includes(String(familia))) {
     requiredDetails.push(`Convite personalizado para: ${familia}`);

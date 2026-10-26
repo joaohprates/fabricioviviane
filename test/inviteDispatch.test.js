@@ -40,7 +40,8 @@ test("monta link individual e mensagem predefinida", () => {
   assert.match(message, /Fabricio & Viviane/);
   assert.match(message, /6 de março de 2027/);
   assert.match(message, /10h30 da manhã/);
-  assert.match(message, /Av\. Cristóvão Colombo, 87/);
+  assert.match(message, /Chácara Attenas — Marialva\/PR/);
+  assert.match(message, /google\.com\/maps\?q=-23\.4965377,-51\.7706713/);
   assert.match(message, /Deus abençoe/);
 });
 
@@ -55,7 +56,8 @@ test("a mensagem padrão inclui nome, token, data, local e conteúdo religioso",
   assert.match(message, /Fabricio & Viviane/);
   assert.match(message, /6 de março de 2027/);
   assert.match(message, /10h30 da manhã/);
-  assert.match(message, /Av\. Cristóvão Colombo, 87/);
+  assert.match(message, /Chácara Attenas — Marialva\/PR/);
+  assert.match(message, /google\.com\/maps\?q=-23\.4965377,-51\.7706713/);
   assert.match(message, /Código de confirmação: joao1/);
   assert.match(message, /convite=joao1#confirmar/);
   assert.match(message, /bênção de Deus/);
