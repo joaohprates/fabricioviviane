@@ -60,6 +60,23 @@
             <img id="qr-image" alt="QR Code para conectar o WhatsApp dos noivos" hidden />
           </div>
           <p class="connection-copy" id="connection-copy">No celular: WhatsApp → Aparelhos conectados → Conectar aparelho.</p>
+          <div class="pairing-card">
+            <div class="pairing-heading">
+              <div><span>ALTERNATIVA AO QR</span><strong>Conectar com código</strong></div>
+              <span class="pairing-badge">8 caracteres</span>
+            </div>
+            <label for="pairing-phone">Número do WhatsApp dos noivos</label>
+            <div class="pairing-row">
+              <input id="pairing-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(44) 99999-9999" />
+              <button class="button button-quiet" id="pairing-button" type="button">Gerar código</button>
+            </div>
+            <p class="pairing-message" id="pairing-message" role="status"></p>
+            <div class="pairing-result" id="pairing-result" hidden>
+              <span>Digite este código no celular</span>
+              <div><output id="pairing-code" aria-live="polite"></output><button class="text-button" id="copy-pairing-code" type="button">Copiar</button></div>
+              <p>WhatsApp → Aparelhos conectados → Conectar aparelho → Conectar com número de telefone.</p>
+            </div>
+          </div>
           <div class="button-row">
             <button class="button button-accent" id="connect-button" type="button">Gerar QR Code</button>
             <button class="button button-quiet" id="disconnect-button" type="button">Desconectar</button>

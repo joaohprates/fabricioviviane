@@ -156,6 +156,23 @@ main { width: min(1320px, calc(100% - 48px)); margin: 0 auto; padding: 48px 0 80
 .qr-mark { display: block; color: var(--gold); font: 400 92px/0.8 "Fraunces", serif; transform: rotate(-12deg); }
 .qr-placeholder p { font-size: 12px; }
 .connection-copy, .template-note, .send-cadence, .risk-note { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.pairing-card { margin-top: 18px; padding: 16px; border: 1px solid var(--line); background: rgba(255,255,255,.34); }
+.pairing-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 13px; }
+.pairing-heading div { display: grid; gap: 4px; }
+.pairing-heading div > span, .pairing-badge { color: var(--wine); font: 500 9px/1.3 "IBM Plex Mono", monospace; letter-spacing: .12em; }
+.pairing-heading strong { font: 500 18px/1.2 "Fraunces", serif; }
+.pairing-badge { padding: 5px 7px; border: 1px solid rgba(111,37,42,.24); white-space: nowrap; }
+.pairing-card label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 11px; }
+.pairing-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+.pairing-row input { min-width: 0; border: 1px solid var(--line); background: #fffdfa; color: var(--ink); padding: 12px 13px; outline: none; }
+.pairing-row input:focus { border-color: var(--wine); box-shadow: 0 0 0 3px rgba(111,37,42,.11); }
+.pairing-message { min-height: 17px; margin: 8px 0 0; color: var(--wine); font-size: 11px; }
+.pairing-result { margin-top: 12px; padding: 14px; color: var(--paper-light); background: var(--ink); }
+.pairing-result > span { color: rgba(255,255,255,.58); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
+.pairing-result > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 7px; }
+.pairing-result output { color: white; font: 500 clamp(25px,4vw,34px)/1 "IBM Plex Mono", monospace; letter-spacing: .12em; }
+.pairing-result .text-button { color: #e0b979; }
+.pairing-result p { margin: 11px 0 0; color: rgba(255,255,255,.65); font-size: 11px; line-height: 1.5; }
 .button-row { display: flex; gap: 9px; margin-top: 20px; }
 
 .metrics { display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--line); }
@@ -214,6 +231,8 @@ main { width: min(1320px, calc(100% - 48px)); margin: 0 auto; padding: 48px 0 80
   .qr-stage { min-height: 270px; }
   .metrics strong { font-size: 35px; }
   .button-row { flex-direction: column; }
+  .pairing-row { grid-template-columns: 1fr; }
+  .pairing-row .button { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

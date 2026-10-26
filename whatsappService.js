@@ -45,6 +45,24 @@ function accountLabel(user) {
   return user.name ? `${user.name} · ${suffix}` : suffix;
 }
 
+function normalizePairingPhone(value) {
+  let digits = String(value ?? "").replace(/\D/g, "");
+  if (/^\d{10,11}$/.test(digits)) digits = `55${digits}`;
+  if (!/^55\d{10,11}$/.test(digits)) {
+    const error = new Error("Informe um número brasileiro válido com DDD");
+    error.status = 400;
+    throw error;
+  }
+  return digits;
+}
+
+function formatPairingCode(value) {
+  return String(value ?? "")
+    .replace(/[^a-z0-9]/gi, "")
+    .toUpperCase()
+    .replace(/(.{4})(?=.)/g, "$1-");
+}
+
 export class WhatsAppService {
   constructor({
     authDir = resolveWhatsAppAuthDir(),
@@ -72,6 +90,7 @@ export class WhatsAppService {
     this.connectPromise = null;
     this.state = "disconnected";
     this.qrDataUrl = null;
+    this.pairingCode = null;
     this.lastError = "";
     this.connectedAccount = null;
     this.manualDisconnect = false;
@@ -82,13 +101,14 @@ export class WhatsAppService {
     return {
       state: this.state,
       qrDataUrl: this.qrDataUrl,
+      pairingCode: this.pairingCode,
       lastError: this.lastError,
       connectedAccount: this.connectedAccount,
     };
   }
 
   async connect() {
-    if (this.state === "connected" || this.state === "qr") {
+    if (["connected", "qr", "pairing"].includes(this.state)) {
       return this.getStatus();
     }
     if (this.connectPromise) return this.connectPromise;
@@ -127,6 +147,24 @@ export class WhatsAppService {
     });
   }
 
+  async generatePairingCode(phoneNumber) {
+    const normalizedPhone = normalizePairingPhone(phoneNumber);
+    if (this.state === "connected") {
+      throw new Error("O WhatsApp já está conectado");
+    }
+
+    await this.connect();
+    if (!this.socket?.requestPairingCode) {
+      throw new Error("Não foi possível preparar o código de pareamento");
+    }
+
+    const code = await this.socket.requestPairingCode(normalizedPhone);
+    this.pairingCode = formatPairingCode(code);
+    this.state = "pairing";
+    this.lastError = "";
+    return this.getStatus();
+  }
+
   async handleConnectionUpdate(socket, { connection, lastDisconnect, qr }) {
     if (socket !== this.socket) return;
 
@@ -135,13 +173,14 @@ export class WhatsAppService {
       const dataUrl = await this.qrToDataUrl(qr);
       if (socket === this.socket && generation === this.qrGeneration) {
         this.qrDataUrl = dataUrl;
-        this.state = "qr";
+        if (!this.pairingCode) this.state = "qr";
       }
     }
 
     if (connection === "open") {
       this.qrGeneration += 1;
       this.qrDataUrl = null;
+      this.pairingCode = null;
       this.state = "connected";
       this.lastError = "";
       this.connectedAccount = accountLabel(socket.user);
@@ -152,6 +191,7 @@ export class WhatsAppService {
 
     this.qrGeneration += 1;
     this.qrDataUrl = null;
+    this.pairingCode = null;
     this.connectedAccount = null;
     this.socket = null;
     const statusCode = disconnectStatusCode(lastDisconnect);
@@ -198,6 +238,7 @@ export class WhatsAppService {
     this.manualDisconnect = true;
     this.qrGeneration += 1;
     this.qrDataUrl = null;
+    this.pairingCode = null;
     this.connectedAccount = null;
     if (this.socket?.end) {
       this.socket.end(new Error("Desconexão solicitada pelo administrador"));

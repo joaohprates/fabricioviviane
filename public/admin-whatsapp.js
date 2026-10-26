@@ -7,6 +7,12 @@ const connectionPill = document.getElementById("connection-pill");
 const connectionCopy = document.getElementById("connection-copy");
 const qrImage = document.getElementById("qr-image");
 const qrPlaceholder = document.getElementById("qr-placeholder");
+const pairingPhone = document.getElementById("pairing-phone");
+const pairingButton = document.getElementById("pairing-button");
+const pairingMessage = document.getElementById("pairing-message");
+const pairingResult = document.getElementById("pairing-result");
+const pairingCode = document.getElementById("pairing-code");
+const copyPairingCode = document.getElementById("copy-pairing-code");
 const connectButton = document.getElementById("connect-button");
 const disconnectButton = document.getElementById("disconnect-button");
 const refreshButton = document.getElementById("refresh-button");
@@ -29,6 +35,7 @@ const TOKEN_KEY = "fv-whatsapp-admin-token";
 let adminToken = sessionStorage.getItem(TOKEN_KEY) || "";
 let pollTimer = null;
 let latestStatus = null;
+let lastPairingCode = "";
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -53,6 +60,7 @@ function connectionLabel(state) {
     disconnected: "Desconectado",
     connecting: "Conectando",
     qr: "Aguardando leitura",
+    pairing: "Aguardando código",
     connected: "Conectado",
     logged_out: "Sessão encerrada",
     error: "Erro",
@@ -65,7 +73,7 @@ function renderStatus(data) {
   const dispatch = data.dispatch || {};
   const progress = dispatch.progress || { selected: 0, processed: 0, sent: 0, failed: 0 };
   connectionPill.textContent = connectionLabel(whatsapp.state);
-  connectionPill.className = "status-pill" + (whatsapp.state === "connected" ? " connected" : (["qr", "connecting"].includes(whatsapp.state) ? " waiting" : ""));
+  connectionPill.className = "status-pill" + (whatsapp.state === "connected" ? " connected" : (["qr", "pairing", "connecting"].includes(whatsapp.state) ? " waiting" : ""));
 
   if (whatsapp.qrDataUrl) {
     qrImage.src = whatsapp.qrDataUrl;
@@ -77,8 +85,15 @@ function renderStatus(data) {
     qrPlaceholder.hidden = false;
   }
 
+  if (whatsapp.pairingCode) lastPairingCode = whatsapp.pairingCode;
+  if (whatsapp.state === "connected") lastPairingCode = "";
+  pairingCode.textContent = lastPairingCode;
+  pairingResult.hidden = !lastPairingCode;
+
   if (whatsapp.state === "connected") {
     connectionCopy.textContent = whatsapp.connectedAccount || "WhatsApp conectado e pronto.";
+  } else if (whatsapp.state === "pairing") {
+    connectionCopy.textContent = "Digite o código abaixo no celular dos noivos para concluir a conexão.";
   } else if (whatsapp.state === "qr") {
     connectionCopy.textContent = "Escaneie o QR Code no celular dos noivos. Ele expira e será renovado automaticamente.";
   } else if (whatsapp.lastError) {
@@ -87,7 +102,9 @@ function renderStatus(data) {
     connectionCopy.textContent = "No celular: WhatsApp → Aparelhos conectados → Conectar aparelho.";
   }
 
-  connectButton.disabled = ["connecting", "qr", "connected"].includes(whatsapp.state);
+  connectButton.disabled = ["connecting", "qr", "pairing", "connected"].includes(whatsapp.state);
+  pairingButton.disabled = whatsapp.state === "connected";
+  pairingPhone.disabled = whatsapp.state === "connected";
   disconnectButton.disabled = whatsapp.state === "disconnected";
   sendLimit.max = String(data.settings?.maxPerRun || 20);
   if (Number(sendLimit.value) > Number(sendLimit.max)) sendLimit.value = sendLimit.max;
@@ -208,9 +225,37 @@ connectButton.addEventListener("click", async () => {
   }
 });
 
+pairingButton.addEventListener("click", async () => {
+  pairingButton.disabled = true;
+  pairingMessage.textContent = "Gerando código seguro…";
+  try {
+    const result = await api("/api/admin/whatsapp/pairing-code", {
+      method: "POST",
+      body: JSON.stringify({ phoneNumber: pairingPhone.value }),
+    });
+    renderStatus({ ...latestStatus, whatsapp: result.whatsapp });
+    pairingMessage.textContent = "Código gerado. Digite-o no celular dos noivos.";
+  } catch (error) {
+    pairingMessage.textContent = error.message;
+  } finally {
+    pairingButton.disabled = latestStatus?.whatsapp?.state === "connected";
+  }
+});
+
+copyPairingCode.addEventListener("click", async () => {
+  if (!pairingCode.textContent) return;
+  try {
+    await navigator.clipboard.writeText(pairingCode.textContent.replace(/-/g, ""));
+    pairingMessage.textContent = "Código copiado.";
+  } catch {
+    pairingMessage.textContent = "Não foi possível copiar. Selecione o código acima.";
+  }
+});
+
 disconnectButton.addEventListener("click", async () => {
   try {
     await api("/api/admin/whatsapp/disconnect", { method: "POST", body: "{}" });
+    lastPairingCode = "";
     await refreshStatus();
   } catch (error) {
     connectionCopy.textContent = error.message;

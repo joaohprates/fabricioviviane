@@ -131,6 +131,18 @@ app.post("/api/admin/whatsapp/connect", adminOnly, async (_req, res) => {
   }
 });
 
+app.post("/api/admin/whatsapp/pairing-code", adminOnly, async (req, res) => {
+  try {
+    const status = await whatsappService.generatePairingCode(req.body?.phoneNumber);
+    res.status(202).json({ whatsapp: status });
+  } catch (error) {
+    if (error?.status === 400) {
+      return res.status(400).json({ error: error.message });
+    }
+    adminError(res, error, "Erro ao gerar o código de conexão");
+  }
+});
+
 app.post("/api/admin/whatsapp/disconnect", adminOnly, (_req, res) => {
   inviteDispatchManager.stop();
   res.json({ whatsapp: whatsappService.disconnect() });

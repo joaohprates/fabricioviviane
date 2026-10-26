@@ -44,6 +44,7 @@ test("redireciona configuração relativa para o temporário no Vercel", () => {
 function createHarness({ exists = true } = {}) {
   const ev = new EventEmitter();
   const sent = [];
+  const pairingRequests = [];
   const socket = {
     ev,
     user: { id: "5544999999999:1@s.whatsapp.net", name: "Noivos" },
@@ -51,6 +52,10 @@ function createHarness({ exists = true } = {}) {
     sendMessage: async (jid, content) => {
       sent.push({ jid, content });
       return { key: { id: "message-123" } };
+    },
+    requestPairingCode: async (phoneNumber) => {
+      pairingRequests.push(phoneNumber);
+      return "ABCD1234";
     },
     end: () => {},
   };
@@ -62,8 +67,34 @@ function createHarness({ exists = true } = {}) {
     logger: { trace() {}, debug() {}, info() {}, warn() {}, error() {}, child() { return this; } },
     disconnectReason: { loggedOut: 401, restartRequired: 515 },
   });
-  return { service, socket, sent };
+  return { service, socket, sent, pairingRequests };
 }
+
+test("gera e expõe código de pareamento para um celular brasileiro", async () => {
+  const { service, socket, pairingRequests } = createHarness();
+
+  const status = await service.generatePairingCode("(44) 99999-9999");
+
+  assert.deepEqual(pairingRequests, ["5544999999999"]);
+  assert.equal(status.state, "pairing");
+  assert.equal(status.pairingCode, "ABCD-1234");
+
+  socket.ev.emit("connection.update", { qr: "qr-alternativo" });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(service.getStatus().state, "pairing");
+  assert.equal(service.getStatus().pairingCode, "ABCD-1234");
+  assert.equal(service.getStatus().qrDataUrl, "data:image/png;base64,qr-alternativo");
+});
+
+test("recusa número inválido ao gerar código de pareamento", async () => {
+  const { service, pairingRequests } = createHarness();
+
+  await assert.rejects(
+    () => service.generatePairingCode("449999"),
+    /número brasileiro válido/i
+  );
+  assert.deepEqual(pairingRequests, []);
+});
 
 test("expõe o QR e muda para conectado após o pareamento", async () => {
   const { service, socket } = createHarness();
