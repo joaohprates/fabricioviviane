@@ -45,6 +45,7 @@ function createHarness({ exists = true } = {}) {
   const ev = new EventEmitter();
   const sent = [];
   const pairingRequests = [];
+  let clearedAuthStates = 0;
   const socket = {
     ev,
     user: { id: "5544999999999:1@s.whatsapp.net", name: "Noivos" },
@@ -66,8 +67,9 @@ function createHarness({ exists = true } = {}) {
     qrToDataUrl: async (value) => `data:image/png;base64,${value}`,
     logger: { trace() {}, debug() {}, info() {}, warn() {}, error() {}, child() { return this; } },
     disconnectReason: { loggedOut: 401, restartRequired: 515 },
+    clearAuthState: async () => { clearedAuthStates += 1; },
   });
-  return { service, socket, sent, pairingRequests };
+  return { service, socket, sent, pairingRequests, getClearedAuthStates: () => clearedAuthStates };
 }
 
 test("gera e expõe código de pareamento para um celular brasileiro", async () => {
@@ -94,6 +96,36 @@ test("recusa número inválido ao gerar código de pareamento", async () => {
     /número brasileiro válido/i
   );
   assert.deepEqual(pairingRequests, []);
+});
+
+test("mantém a execução ativa até concluir o pareamento", async () => {
+  const { service, socket } = createHarness();
+  await service.generatePairingCode("44999999999");
+
+  let settled = false;
+  const pending = service.waitForConnectionEnd({ timeoutMs: 1000 }).then(() => {
+    settled = true;
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(settled, false);
+
+  socket.ev.emit("connection.update", { connection: "open" });
+  await pending;
+  assert.equal(settled, true);
+});
+
+test("limpa credenciais incompletas quando o WhatsApp encerra o pareamento", async () => {
+  const { service, socket, getClearedAuthStates } = createHarness();
+  await service.generatePairingCode("44999999999");
+
+  socket.ev.emit("connection.update", {
+    connection: "close",
+    lastDisconnect: { error: { statusCode: 401 } },
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.equal(service.getStatus().state, "logged_out");
+  assert.equal(getClearedAuthStates(), 1);
 });
 
 test("expõe o QR e muda para conectado após o pareamento", async () => {

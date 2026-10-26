@@ -125,6 +125,9 @@ app.get("/api/admin/whatsapp/status", adminOnly, (_req, res) => {
 app.post("/api/admin/whatsapp/connect", adminOnly, async (_req, res) => {
   try {
     const status = await whatsappService.connect();
+    if (process.env.VERCEL) {
+      waitUntil(whatsappService.waitForConnectionEnd());
+    }
     res.status(202).json({ whatsapp: status });
   } catch (error) {
     adminError(res, error, "Erro ao iniciar a conexão com o WhatsApp");
@@ -134,6 +137,9 @@ app.post("/api/admin/whatsapp/connect", adminOnly, async (_req, res) => {
 app.post("/api/admin/whatsapp/pairing-code", adminOnly, async (req, res) => {
   try {
     const status = await whatsappService.generatePairingCode(req.body?.phoneNumber);
+    if (process.env.VERCEL) {
+      waitUntil(whatsappService.waitForConnectionEnd());
+    }
     res.status(202).json({ whatsapp: status });
   } catch (error) {
     if (error?.status === 400) {

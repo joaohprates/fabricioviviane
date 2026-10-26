@@ -1,5 +1,6 @@
 import os from "node:os";
 import path from "node:path";
+import { rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import makeWASocket, {
   Browsers,
@@ -77,6 +78,7 @@ export class WhatsAppService {
     disconnectReason = DisconnectReason,
     reconnectDelayMs = 2500,
     scheduleReconnect = (callback, delay) => setTimeout(callback, delay),
+    clearAuthState = (directory) => rm(directory, { recursive: true, force: true }),
   } = {}) {
     this.authDir = authDir;
     this.makeSocket = makeSocket;
@@ -86,6 +88,7 @@ export class WhatsAppService {
     this.disconnectReason = disconnectReason;
     this.reconnectDelayMs = reconnectDelayMs;
     this.scheduleReconnect = scheduleReconnect;
+    this.clearAuthState = clearAuthState;
     this.socket = null;
     this.connectPromise = null;
     this.state = "disconnected";
@@ -95,6 +98,7 @@ export class WhatsAppService {
     this.connectedAccount = null;
     this.manualDisconnect = false;
     this.qrGeneration = 0;
+    this.connectionWaiters = new Set();
   }
 
   getStatus() {
@@ -165,6 +169,26 @@ export class WhatsAppService {
     return this.getStatus();
   }
 
+  waitForConnectionEnd({ timeoutMs = 240000 } = {}) {
+    if (["connected", "disconnected", "logged_out", "error"].includes(this.state)) {
+      return Promise.resolve(this.getStatus());
+    }
+
+    return new Promise((resolve) => {
+      const finish = () => {
+        clearTimeout(timer);
+        this.connectionWaiters.delete(finish);
+        resolve(this.getStatus());
+      };
+      const timer = setTimeout(finish, Math.max(1000, Number(timeoutMs) || 240000));
+      this.connectionWaiters.add(finish);
+    });
+  }
+
+  settleConnectionWaiters() {
+    for (const finish of [...this.connectionWaiters]) finish();
+  }
+
   async handleConnectionUpdate(socket, { connection, lastDisconnect, qr }) {
     if (socket !== this.socket) return;
 
@@ -184,6 +208,7 @@ export class WhatsAppService {
       this.state = "connected";
       this.lastError = "";
       this.connectedAccount = accountLabel(socket.user);
+      this.settleConnectionWaiters();
       return;
     }
 
@@ -197,12 +222,19 @@ export class WhatsAppService {
     const statusCode = disconnectStatusCode(lastDisconnect);
 
     if (statusCode === this.disconnectReason.loggedOut) {
+      try {
+        await this.clearAuthState(this.authDir);
+      } catch (error) {
+        this.logger.warn?.({ err: error }, "Falha ao limpar credenciais encerradas");
+      }
       this.state = "logged_out";
-      this.lastError = "A sessão foi desconectada pelo WhatsApp. Gere um novo QR Code.";
+      this.lastError = "A sessão foi encerrada pelo WhatsApp. Gere um novo QR Code ou código de conexão.";
+      this.settleConnectionWaiters();
       return;
     }
 
     this.state = "disconnected";
+    this.settleConnectionWaiters();
     if (!this.manualDisconnect) {
       this.scheduleReconnect(() => {
         void this.connect().catch(() => {});
@@ -245,6 +277,7 @@ export class WhatsAppService {
     }
     this.socket = null;
     this.state = "disconnected";
+    this.settleConnectionWaiters();
     return this.getStatus();
   }
 }
