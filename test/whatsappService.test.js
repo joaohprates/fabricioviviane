@@ -41,10 +41,15 @@ test("redireciona configuração relativa para o temporário no Vercel", () => {
   );
 });
 
-function createHarness({ exists = true } = {}) {
+function createHarness({
+  exists = true,
+  saveCreds = async () => {},
+  scheduleReconnect,
+} = {}) {
   const ev = new EventEmitter();
   const sent = [];
   const pairingRequests = [];
+  const socketConfigs = [];
   let clearedAuthStates = 0;
   const socket = {
     ev,
@@ -62,22 +67,33 @@ function createHarness({ exists = true } = {}) {
   };
   const service = new WhatsAppService({
     authDir: "C:\\temp\\whatsapp-test",
-    makeSocket: () => socket,
-    useAuthState: async () => ({ state: { creds: {} }, saveCreds: async () => {} }),
+    makeSocket: (config) => {
+      socketConfigs.push(config);
+      return socket;
+    },
+    useAuthState: async () => ({ state: { creds: {} }, saveCreds }),
+    getLatestVersion: async () => ({ version: [2, 3000, 9999999999], isLatest: true }),
     qrToDataUrl: async (value) => `data:image/png;base64,${value}`,
     logger: { trace() {}, debug() {}, info() {}, warn() {}, error() {}, child() { return this; } },
     disconnectReason: { loggedOut: 401, restartRequired: 515 },
     clearAuthState: async () => { clearedAuthStates += 1; },
+    ...(scheduleReconnect ? { scheduleReconnect } : {}),
   });
-  return { service, socket, sent, pairingRequests, getClearedAuthStates: () => clearedAuthStates };
+  return { service, socket, sent, pairingRequests, socketConfigs, getClearedAuthStates: () => clearedAuthStates };
 }
 
-test("gera e expõe código de pareamento para um celular brasileiro", async () => {
-  const { service, socket, pairingRequests } = createHarness();
+test("aguarda o socket ficar pronto e usa a versão Web atual antes de gerar o código", async () => {
+  const { service, socket, pairingRequests, socketConfigs } = createHarness();
 
-  const status = await service.generatePairingCode("(44) 99999-9999");
+  const pendingCode = service.generatePairingCode("(44) 99999-9999");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(pairingRequests, []);
+
+  socket.ev.emit("connection.update", { qr: "qr-pronto" });
+  const status = await pendingCode;
 
   assert.deepEqual(pairingRequests, ["5544999999999"]);
+  assert.deepEqual(socketConfigs[0].version, [2, 3000, 9999999999]);
   assert.equal(status.state, "pairing");
   assert.equal(status.pairingCode, "ABCD-1234");
 
@@ -100,7 +116,10 @@ test("recusa número inválido ao gerar código de pareamento", async () => {
 
 test("mantém a execução ativa até concluir o pareamento", async () => {
   const { service, socket } = createHarness();
-  await service.generatePairingCode("44999999999");
+  const pendingCode = service.generatePairingCode("44999999999");
+  await new Promise((resolve) => setImmediate(resolve));
+  socket.ev.emit("connection.update", { qr: "qr-pronto" });
+  await pendingCode;
 
   let settled = false;
   const pending = service.waitForConnectionEnd({ timeoutMs: 1000 }).then(() => {
@@ -116,7 +135,10 @@ test("mantém a execução ativa até concluir o pareamento", async () => {
 
 test("limpa credenciais incompletas quando o WhatsApp encerra o pareamento", async () => {
   const { service, socket, getClearedAuthStates } = createHarness();
-  await service.generatePairingCode("44999999999");
+  const pendingCode = service.generatePairingCode("44999999999");
+  await new Promise((resolve) => setImmediate(resolve));
+  socket.ev.emit("connection.update", { qr: "qr-pronto" });
+  await pendingCode;
 
   socket.ev.emit("connection.update", {
     connection: "close",
@@ -126,6 +148,44 @@ test("limpa credenciais incompletas quando o WhatsApp encerra o pareamento", asy
 
   assert.equal(service.getStatus().state, "logged_out");
   assert.equal(getClearedAuthStates(), 1);
+});
+
+test("aguarda salvar as credenciais antes de reiniciar após o código ser aceito", async () => {
+  let releaseSave;
+  let reconnectStarted = false;
+  const saving = new Promise((resolve) => { releaseSave = resolve; });
+  const { service, socket } = createHarness({
+    saveCreds: () => saving,
+    scheduleReconnect: (callback) => {
+      reconnectStarted = true;
+      callback();
+    },
+  });
+  const pendingCode = service.generatePairingCode("44999999999");
+  await new Promise((resolve) => setImmediate(resolve));
+  socket.ev.emit("connection.update", { qr: "qr-pronto" });
+  await pendingCode;
+
+  socket.ev.emit("creds.update", { registered: true });
+  let lifecycleSettled = false;
+  const lifecycle = service.waitForConnectionEnd({ timeoutMs: 1000 }).then(() => {
+    lifecycleSettled = true;
+  });
+  socket.ev.emit("connection.update", {
+    connection: "close",
+    lastDisconnect: { error: { statusCode: 515 } },
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(reconnectStarted, false);
+
+  releaseSave();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(reconnectStarted, true);
+  assert.equal(lifecycleSettled, false);
+
+  socket.ev.emit("connection.update", { connection: "open" });
+  await lifecycle;
+  assert.equal(lifecycleSettled, true);
 });
 
 test("expõe o QR e muda para conectado após o pareamento", async () => {

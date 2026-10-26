@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import makeWASocket, {
   Browsers,
   DisconnectReason,
+  fetchLatestWaWebVersion,
   useMultiFileAuthState,
 } from "@whiskeysockets/baileys";
 import QRCode from "qrcode";
@@ -79,6 +80,7 @@ export class WhatsAppService {
     reconnectDelayMs = 2500,
     scheduleReconnect = (callback, delay) => setTimeout(callback, delay),
     clearAuthState = (directory) => rm(directory, { recursive: true, force: true }),
+    getLatestVersion = fetchLatestWaWebVersion,
   } = {}) {
     this.authDir = authDir;
     this.makeSocket = makeSocket;
@@ -89,6 +91,7 @@ export class WhatsAppService {
     this.reconnectDelayMs = reconnectDelayMs;
     this.scheduleReconnect = scheduleReconnect;
     this.clearAuthState = clearAuthState;
+    this.getLatestVersion = getLatestVersion;
     this.socket = null;
     this.connectPromise = null;
     this.state = "disconnected";
@@ -99,6 +102,8 @@ export class WhatsAppService {
     this.manualDisconnect = false;
     this.qrGeneration = 0;
     this.connectionWaiters = new Set();
+    this.qrWaiters = new Set();
+    this.credsSavePromise = Promise.resolve();
   }
 
   getStatus() {
@@ -136,16 +141,26 @@ export class WhatsAppService {
 
   async createSocket() {
     const { state, saveCreds } = await this.useAuthState(this.authDir);
+    let version;
+    try {
+      const latest = await this.getLatestVersion();
+      if (Array.isArray(latest?.version)) version = latest.version;
+    } catch (error) {
+      this.logger.warn?.({ err: error }, "Falha ao consultar a versão Web atual");
+    }
     const socket = this.makeSocket({
       auth: state,
-      browser: Browsers.ubuntu("Convites F&V"),
+      ...(version ? { version } : {}),
+      browser: Browsers.windows("Chrome"),
       logger: this.logger,
       markOnlineOnConnect: false,
       syncFullHistory: false,
     });
     this.socket = socket;
 
-    socket.ev.on("creds.update", saveCreds);
+    socket.ev.on("creds.update", () => {
+      this.credsSavePromise = this.credsSavePromise.then(() => saveCreds());
+    });
     socket.ev.on("connection.update", (update) => {
       void this.handleConnectionUpdate(socket, update);
     });
@@ -158,6 +173,7 @@ export class WhatsAppService {
     }
 
     await this.connect();
+    await this.waitForQrReady();
     if (!this.socket?.requestPairingCode) {
       throw new Error("Não foi possível preparar o código de pareamento");
     }
@@ -167,6 +183,36 @@ export class WhatsAppService {
     this.state = "pairing";
     this.lastError = "";
     return this.getStatus();
+  }
+
+  waitForQrReady({ timeoutMs = 20000 } = {}) {
+    if (this.qrDataUrl) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+      const waiter = {
+        resolve: () => {
+          clearTimeout(timer);
+          this.qrWaiters.delete(waiter);
+          resolve();
+        },
+        reject: (error) => {
+          clearTimeout(timer);
+          this.qrWaiters.delete(waiter);
+          reject(error);
+        },
+      };
+      const timer = setTimeout(() => {
+        waiter.reject(new Error("O WhatsApp não deixou a sessão pronta para gerar o código"));
+      }, Math.max(1000, Number(timeoutMs) || 20000));
+      this.qrWaiters.add(waiter);
+    });
+  }
+
+  settleQrWaiters(error = null) {
+    for (const waiter of [...this.qrWaiters]) {
+      if (error) waiter.reject(error);
+      else waiter.resolve();
+    }
   }
 
   waitForConnectionEnd({ timeoutMs = 240000 } = {}) {
@@ -198,6 +244,7 @@ export class WhatsAppService {
       if (socket === this.socket && generation === this.qrGeneration) {
         this.qrDataUrl = dataUrl;
         if (!this.pairingCode) this.state = "qr";
+        this.settleQrWaiters();
       }
     }
 
@@ -220,6 +267,18 @@ export class WhatsAppService {
     this.connectedAccount = null;
     this.socket = null;
     const statusCode = disconnectStatusCode(lastDisconnect);
+    this.settleQrWaiters(new Error("A conexão foi encerrada antes de gerar o código"));
+
+    if (statusCode === this.disconnectReason.restartRequired) {
+      try {
+        await this.credsSavePromise;
+      } catch (error) {
+        this.state = "error";
+        this.lastError = "As credenciais do WhatsApp não puderam ser salvas";
+        this.settleConnectionWaiters();
+        return;
+      }
+    }
 
     if (statusCode === this.disconnectReason.loggedOut) {
       try {
@@ -234,12 +293,17 @@ export class WhatsAppService {
     }
 
     this.state = "disconnected";
-    this.settleConnectionWaiters();
-    if (!this.manualDisconnect) {
-      this.scheduleReconnect(() => {
-        void this.connect().catch(() => {});
-      }, statusCode === this.disconnectReason.restartRequired ? 250 : this.reconnectDelayMs);
+    if (this.manualDisconnect) {
+      this.settleConnectionWaiters();
+      return;
     }
+    this.scheduleReconnect(() => {
+      void this.connect().catch((error) => {
+        this.state = "error";
+        this.lastError = String(error?.message || error || "Erro ao reconectar");
+        this.settleConnectionWaiters();
+      });
+    }, statusCode === this.disconnectReason.restartRequired ? 250 : this.reconnectDelayMs);
   }
 
   async sendText(number, text) {
@@ -277,6 +341,7 @@ export class WhatsAppService {
     }
     this.socket = null;
     this.state = "disconnected";
+    this.settleQrWaiters(new Error("Conexão cancelada"));
     this.settleConnectionWaiters();
     return this.getStatus();
   }
